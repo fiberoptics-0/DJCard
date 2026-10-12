@@ -24,7 +24,11 @@ public class CardInstance : MonoBehaviour, IDragHandler, IEndDragHandler, IBegin
     private Vector3 startingPosition;
     private Transform startingParent;
 
-    private CardProperties.State state = CardProperties.State.None;
+    [Header("Misc")]
+    [SerializeField] private CardProperties.State state;
+
+    public CardProperties.State getState => state;
+    public void SetState(CardProperties.State state) { this.state = state; }
 
     public int getAttack => attack;
     public int getDefense => defense;
@@ -33,6 +37,8 @@ public class CardInstance : MonoBehaviour, IDragHandler, IEndDragHandler, IBegin
     public int getMaxDefense => maxDefense;
     public Sprite getArt => art;
     public string getDescription => description;
+    
+
 
     public void Initialize(CardData data)
     {
@@ -101,7 +107,7 @@ public class CardInstance : MonoBehaviour, IDragHandler, IEndDragHandler, IBegin
             transform.SetParent(startingParent, true);
             return;
         }
-        if(!GameInstance.Instance.DeployCard(this,slot,true)) { transform.SetParent(startingParent, true); }
+        if(!GameInstance.Instance.DeployCard(this,slot)) { transform.SetParent(startingParent, true); }
     }
 
     public void OnPointerClick(PointerEventData eventData)

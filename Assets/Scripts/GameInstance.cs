@@ -26,6 +26,9 @@ public class GameInstance : MonoBehaviour
     [Header("Prefab Reference")]
     [SerializeField] private GameObject cardPrefab;
 
+    [Header("Misc")]
+    [SerializeField] private TurnState turnState = TurnState.Player;
+
     public static GameInstance Instance {get; private set;}
 
     private void DrawCard()
@@ -36,7 +39,11 @@ public class GameInstance : MonoBehaviour
         {
             GameObject newCard = Instantiate(cardPrefab, playerHand.transform);
             CardInstance cardInstance = newCard.GetComponent<CardInstance>();
-            if(cardInstance != null) { cardInstance.Initialize(cardData); }
+            if(cardInstance != null)
+            {
+                cardInstance.Initialize(cardData);
+                cardInstance.SetState(CardProperties.State.Hand);
+            }
             hand++;
         }
     }
@@ -49,15 +56,53 @@ public class GameInstance : MonoBehaviour
         EnemyTacticalEnergy.text = enemyTacticalEnergy.ToString() + "/" + maxEnemyTacticalEnergy.ToString();
     }
 
-    public bool DeployCard(CardInstance card, CardSlot slot, bool fromHand)
+    public bool DeployCard(CardInstance card, CardSlot slot)
     {
         if(slot.transform.childCount != 0) return false;
-        if(card.getCost > playerNormalEnergy) return false;
-        playerNormalEnergy -= card.getCost;
-        card.transform.SetParent(slot.transform);
-        if(fromHand) hand--;
-        UpdateUI();
-        return true;
+        if(slot.getSlotType == CardSlot.SlotType.Field)
+        {
+            if(card.getState == CardProperties.State.Field && 
+                (turnState == TurnState.Player || turnState == TurnState.PlayerAttack))
+            {
+                card.transform.SetParent(slot.transform);
+                card.SetState(CardProperties.State.Field);
+                UpdateUI();
+                return true;
+            }
+
+            if(card.getState == CardProperties.State.Hand && turnState == TurnState.Player)
+            {
+                if(playerNormalEnergy < card.getCost) return false;
+                playerNormalEnergy -= card.getCost;
+                card.transform.SetParent(slot.transform);
+                hand--;
+                card.SetState(CardProperties.State.Field);
+                UpdateUI();
+                return true;
+            }
+
+            if(card.getState == CardProperties.State.Battle && turnState == TurnState.PlayerAttack)
+            {
+                card.transform.SetParent(slot.transform);
+                card.SetState(CardProperties.State.Field);
+                UpdateUI();
+                return true;
+            }
+
+            return false;
+        }
+        if(slot.getSlotType == CardSlot.SlotType.Battle)
+        {
+            if((card.getState == CardProperties.State.Field || card.getState == CardProperties.State.Battle) 
+                && turnState == TurnState.PlayerAttack)
+            {
+                card.transform.SetParent(slot.transform);
+                card.SetState(CardProperties.State.Battle);
+                UpdateUI();
+                return true;
+            }
+        }
+        return false;
     }
 
     void Awake()
@@ -69,6 +114,15 @@ public class GameInstance : MonoBehaviour
         }
         Instance = this;
         UpdateUI();
+    }
+
+    private enum TurnState
+    {
+        None,
+        Player,
+        Enemy,
+        PlayerAttack,
+        EnemyAttack,
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created

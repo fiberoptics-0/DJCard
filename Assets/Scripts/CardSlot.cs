@@ -2,6 +2,17 @@ using UnityEngine;
 
 public class CardSlot : MonoBehaviour
 {
+
+    [SerializeField] private SlotType slotType;
+
+    public SlotType getSlotType => slotType;
+
+    public enum SlotType
+    {
+        None,
+        Field,
+        Battle
+    }
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
