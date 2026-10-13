@@ -14,6 +14,7 @@ public class CardProperties
         None,
         Hand,
         Field,
-        Battle
+        Battle,
+        Created
     }
 }

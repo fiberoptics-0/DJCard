@@ -11,4 +11,12 @@ public static class Utils
         }
         return null;
     }
+    
+    public enum Side
+    {
+        None,
+        Player,
+        Enemy
+    }
+    
 }

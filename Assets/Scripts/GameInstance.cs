@@ -23,6 +23,12 @@ public class GameInstance : MonoBehaviour
     [SerializeField] private TextMeshProUGUI EnemyNormalEnergy;
     [SerializeField] private TextMeshProUGUI EnemyTacticalEnergy;
 
+    [Header("Card Slots")]
+    [SerializeField] private GameObject FieldSlots;
+    [SerializeField] private GameObject BattleSlots;
+    [SerializeField] private GameObject EnemyFieldSlots;
+    [SerializeField] private GameObject EnemyBattleSlots;
+
     [Header("Prefab Reference")]
     [SerializeField] private GameObject cardPrefab;
 
@@ -48,6 +54,27 @@ public class GameInstance : MonoBehaviour
         }
     }
 
+    public void EndTurn()
+    {
+        if(enemyNormalEnergy < 1) return;
+        CardSlot[] enemyFieldSlots = EnemyFieldSlots.GetComponentsInChildren<CardSlot>();
+        foreach(var slot in enemyFieldSlots)
+        {
+            if(slot.transform.childCount == 0)
+            {
+                GameObject newCard = Instantiate(cardPrefab, slot.transform);
+                CardInstance cardInstance = newCard.GetComponent<CardInstance>();
+                if(cardInstance != null)
+                {
+                    cardInstance.Initialize(ResourceManager.Instance.getCard("alligator"));
+                    enemyNormalEnergy--;
+                    UpdateUI();
+                    return;
+                }
+            }
+        }
+    }
+
     private void UpdateUI()
     {
         PlayerNormalEnergy.text = playerNormalEnergy.ToString() + "/" + maxPlayerNormalEnergy.ToString();
@@ -56,11 +83,19 @@ public class GameInstance : MonoBehaviour
         EnemyTacticalEnergy.text = enemyTacticalEnergy.ToString() + "/" + maxEnemyTacticalEnergy.ToString();
     }
 
-    public bool DeployCard(CardInstance card, CardSlot slot)
+    public bool DeployCard(CardInstance card, CardSlot slot, Utils.Side side)
     {
         if(slot.transform.childCount != 0) return false;
+        if(slot.getSide != side) return false;
         if(slot.getSlotType == CardSlot.SlotType.Field)
         {
+            if(card.getState == CardProperties.State.Created)
+            {
+                card.transform.SetParent(slot.transform);
+                card.SetState(CardProperties.State.Field);
+                UpdateUI();
+                return true;
+            }
             if(card.getState == CardProperties.State.Field && 
                 (turnState == TurnState.Player || turnState == TurnState.PlayerAttack))
             {
@@ -93,6 +128,13 @@ public class GameInstance : MonoBehaviour
         }
         if(slot.getSlotType == CardSlot.SlotType.Battle)
         {
+            if(card.getState == CardProperties.State.Created)
+            {
+                card.transform.SetParent(slot.transform);
+                card.SetState(CardProperties.State.Battle);
+                UpdateUI();
+                return true;
+            }
             if((card.getState == CardProperties.State.Field || card.getState == CardProperties.State.Battle) 
                 && turnState == TurnState.PlayerAttack)
             {
@@ -113,6 +155,7 @@ public class GameInstance : MonoBehaviour
             return;
         }
         Instance = this;
+        
         UpdateUI();
     }
 

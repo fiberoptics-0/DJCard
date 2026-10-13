@@ -107,7 +107,8 @@ public class CardInstance : MonoBehaviour, IDragHandler, IEndDragHandler, IBegin
             transform.SetParent(startingParent, true);
             return;
         }
-        if(!GameInstance.Instance.DeployCard(this,slot)) { transform.SetParent(startingParent, true); }
+        if(!GameInstance.Instance.DeployCard(this,slot,Utils.Side.Player)) transform.SetParent(startingParent, true);
+        else GameInstance.Instance.EndTurn();
     }
 
     public void OnPointerClick(PointerEventData eventData)
